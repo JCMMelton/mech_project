@@ -23,7 +23,9 @@ window.onmousedown = function(){
 	// console.log(event.button);
 	input.mouse_down = true;
 	if(event.button == 0){
-		mech1.new_bullet();
+		mech1.new_bullet('l');
+	}else if(event.button == 2){
+		mech1.new_bullet('r');
 	};
 };
 window.onmouseup = function(){

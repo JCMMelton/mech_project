@@ -203,7 +203,7 @@ Mech.prototype.leg_dir = function(){
 	return [ret, nang];
 };
 Mech.prototype.move = function(map){
-	var vel,
+	var vel;
 	x_shift = 0;
 	y_shift = 0;
 	if(input.u){
@@ -224,8 +224,14 @@ Mech.prototype.move = function(map){
 	x_shift -= (vel * Math.cos(this.leg_angle));
 	map.data_obj.sx += x_shift;
 	map.data_obj.sy += y_shift;
+	console.log(x_shift,y_shift);
+	for(b in this.bullets){
+		var bb = this.bullets[b];
+		bb[2] += x_shift;
+		bb[5] += y_shift;
+	};
 };
-Mech.prototype.new_bullet = function(){
+Mech.prototype.new_bullet = function(arm){
 	var pi = Math.PI;
 	var x1 = Math.cos(this.angle+pi*.5);
 	var y1 = Math.sin(this.angle+pi*.5);
@@ -233,11 +239,9 @@ Mech.prototype.new_bullet = function(){
 	var y2 = Math.sin(-this.cotangent);
 	// console.log(x,y,dx,dy);
 	// this.bullets.push([x1,y1,x2,y2,0,40]);
-	this.bullets.push( [ Math.cos(this.angle) , Math.sin(this.angle) ,
-						 0 , 40,
-						 0 , 0 ,
-						 x1, y1,
-						 x2, y2  ]);
+	this.bullets.push( [ Math.cos(this.angle-pi*(Math.random()/15)), Math.sin(this.angle+pi*(Math.random()/15)), // index 0,1
+						 0 , 33, 90 , 0, 40,									 // index 2,3,4,5,6 
+						 arm ]);												 // index 7
 };
 Mech.prototype.cycle_bullets = function(){
 	for(b in this.bullets){
@@ -245,34 +249,24 @@ Mech.prototype.cycle_bullets = function(){
 		bul_c.strokeStyle = "#FF8000"; 
 		bul_c.lineWidth = 3;
 
-		// bul_c.moveTo( (   bb[2] * bb[8] ) - ( 40 * bb[8] ) - 40 , ( bb[2] * bb[9] ) + ( 40 * bb[9] ) - 40 );
-		// bul_c.lineTo( ( ( bb[2] + bb[3] ) * bb[8] ) - ( 40 * bb[8] ) - 40 , ( ( bb[2] + bb[3] ) * bb[9] ) + ( 40 * bb[9] ) - 40 );
-	
-		// bul_c.moveTo( (bb[2]+(40*Math.cos(this.angle)/2) )      *bb[0] , (bb[2]+(40*Math.sin(this.angle)/2))      *bb[1] );
-		// bul_c.lineTo( (bb[2]+bb[3]+(40*Math.cos(this.angle)/2))*bb[0] , (bb[2]+bb[3]+(40*Math.sin(this.angle)/2))*bb[1] );
-	
-		// bul_c.moveTo( (bb[2]-(40*1))      *bb[0] , (bb[2]-(40*1))      *bb[1] );
-		// bul_c.lineTo( (bb[2]+bb[3]-(40*1))*bb[0] , (bb[2]+bb[3]-(40*1))*bb[1] );
+		if(bb[7] === 'l'){
+			bul_c.strokeStyle = "#FF8000"; 
+			bul_c.lineWidth = 3;
+			bul_c.moveTo( bb[2]       *bb[0] +bb[3] *bb[1],  bb[5]       *bb[1] +bb[3] * -bb[0]);
+			bul_c.lineTo((bb[2]+bb[6])*bb[0] +bb[3] *bb[1], (bb[5]+bb[6])*bb[1] +bb[3] * -bb[0]);
+		}else if( bb[7] === 'r'){
+			bul_c.strokeStyle = "#0080FF"; 
+			bul_c.lineWidth = 1;
+			var xx1 = bb[2]*bb[0]-bb[3]*bb[1];
+			var yy1 = bb[5]*bb[1]-bb[3]* -bb[0];
+			bul_c.moveTo( xx1,yy1);
+			bul_c.arc(xx1,yy1,3,0,Math.PI*2)
+			// bul_c.lineTo((bb[2]+bb[6])*bb[0] -bb[3] *bb[1], (bb[5]+bb[6])*bb[1] -bb[3] * -bb[0]);
+		};
+		// console.log(bb[2],bb[5]);
 
-		// bul_c.moveTo( bb[4] * bb[0] -40       , bb[4] * bb[1] );
-		// bul_c.lineTo( (bb[4]*bb[1])+bb[2] -40 , (bb[4]*bb[1])+bb[3]);
-	
-		// bul_c.moveTo(bb[4]*bb[0],bb[4]*bb[1]);
-		// bul_c.lineTo((bb[4]+bb[5])*bb[2],(bb[4]+bb[5])*bb[3]);
-
-		// bul_c.moveTo(bb[4]+(bb[5]*bb[2]), bb[4]+(bb[5]*bb[3]) );
-		// bul_c.lineTo(bb[4]+(2*bb[5]*bb[2]), bb[4]+(2*bb[5]*bb[3]));
-
-		// bul_c.moveTo(bb[2]*bb[8] -40,bb[2]*bb[9] -40);
-		// bul_c.lineTo((bb[2]+bb[3])*bb[8] -40,(bb[2]+bb[3])*bb[9] -40);
-
-		
-
-
-
-
-
-		bb[2]+=bb[3];
+		bb[2]+=bb[4];
+		bb[5]+=bb[4];
 		// bb[4]-=bb[3];
 	};
 };
