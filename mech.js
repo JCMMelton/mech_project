@@ -251,12 +251,12 @@ Mech.prototype.cycle_bullets = function(){
 
 		if(bb[7] === 'l'){
 			bul_c.strokeStyle = "#FF8000"; 
-			bul_c.lineWidth = 3;
+			bul_c.lineWidth = 1;
 			bul_c.moveTo( bb[2]       *bb[0] +bb[3] *bb[1],  bb[5]       *bb[1] +bb[3] * -bb[0]);
 			bul_c.lineTo((bb[2]+bb[6])*bb[0] +bb[3] *bb[1], (bb[5]+bb[6])*bb[1] +bb[3] * -bb[0]);
 		}else if( bb[7] === 'r'){
 			bul_c.strokeStyle = "#0080FF"; 
-			bul_c.lineWidth = 1;
+			bul_c.lineWidth = 5;
 			var xx1 = bb[2]*bb[0]-bb[3]*bb[1];
 			var yy1 = bb[5]*bb[1]-bb[3]* -bb[0];
 			bul_c.moveTo( xx1,yy1);
