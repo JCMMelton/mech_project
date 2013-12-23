@@ -7,6 +7,8 @@ function user_input(){
 	this.mouse_x = 0;
 	this.mouse_y = 0;
 	this.mouse_down = false;
+	this.left_click = false;
+	this.right_click = false;
 	this.dump_keys = function(){
 		return {'r':this.r,'l':this.l,'d':this.d,'u':this.u};
 	};
@@ -23,13 +25,18 @@ window.onmousedown = function(){
 	// console.log(event.button);
 	input.mouse_down = true;
 	if(event.button == 0){
-		mech1.new_bullet('l');
+		input.left_click = true;
 	}else if(event.button == 2){
-		mech1.new_bullet('r');
+		input.right_click = true;
 	};
 };
 window.onmouseup = function(){
 	input.mouse_down = false;
+	if(event.button == 0){
+		input.left_click = false;
+	}else if(event.button == 2){
+		input.right_click = false;
+	};
 };
 window.onkeydown = function(k){
 	switch(k.keyCode){

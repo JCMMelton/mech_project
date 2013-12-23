@@ -75,6 +75,10 @@ Render_obj.prototype.morph = function(t_array){
 	this.can.setTransform(t_array[0],t_array[1],t_array[2],t_array[3],t_array[4],t_array[5]);
 	return this;
 };
+Render_obj.prototype.morph2 = function(t_array){
+	this.can.transform(t_array[0],t_array[1],t_array[2],t_array[3],t_array[4],t_array[5]);
+	return this;
+};
 Render_obj.prototype.draw_shape = function(){
 	console.log(this.can);
 	var can = this.can;
@@ -141,6 +145,11 @@ File_obj.prototype.gen_data_obj = function(x,y,xd,yd){ // set parameters for dat
 	this.set_params(this.data_obj); // set data_obj parameters
 	return this;
 };
+File_obj.prototype.scale = function(x,y){
+	this.data_obj.w = x;
+	this.data_obj.h = y;
+	return this;
+};
 File_obj.prototype.offset = function(x,y){ // change image clipping offset
 	this.data_obj.sx = x;
 	this.data_obj.sy = y;
@@ -158,6 +167,7 @@ File_obj.prototype.imove = function(x,y){ // change image position on canvas
 };
 File_obj.prototype.tmove = function(x,y){
 	this.can.setTransform(1,1,1,1,x,y);
+	return this;
 };
 File_obj.prototype.rotate = function(angle){
 	this.angle += angle;

@@ -2,36 +2,47 @@
 function set(){
 	begin();
 	mech1.operate();
+	target_t.draw();
 	map.draw();
 	end();
 };
 function init(){
-	can1 = set_c("canvas1");
-	can2 = set_c("canvas2");
+	tors = set_c("torso");
+	legs_c = set_c("legs");
 	map_c = set_c("map");
-	bul_c = set_c("bullets");
+	bul_r = set_c("right_bullets");
+	bul_l = set_c("left_bullets");
+	strk = set_c("structures");
 	mech1 = new Mech(1,"test_mech1");
 	mech1.build(test_mech1);
 	map = new File_obj();
 	map.load_path(map1.path).canv(map_c).mdata(map1.map_data);
+	smoke = new File_obj();
+	smoke.load_path("images/smoke_cloud.png");
+	target_t = new Target();
 };
 function begin(){
-	can1 = set_c("canvas1");
-	can2 = set_c("canvas2");
+	tors = set_c("torso");
+	legs_c = set_c("legs");
 	map_c = set_c("map");
-	bul_c = set_c("bullets");
-	can1.clearRect(-100,-100,200,200);
-	can1.beginPath();
-	can2.clearRect(-100,-100,200,200);
-	can2.beginPath();
+	bul_r = set_c("right_bullets");
+	bul_l = set_c("left_bullets");
+	strk = set_c("structures");
+	tors.clearRect(-100,-100,200,200);
+	tors.beginPath();
+	legs_c.clearRect(-100,-100,200,200);
+	legs_c.beginPath();
 	map_c.clearRect(-400,-400,400,400);
 	map_c.beginPath();
+	strk.beginPath();
 };
 function end(){
-	can1.stroke();
-	can2.stroke();
+	tors.stroke();
+	legs_c.stroke();
 	map_c.stroke();
-	bul_c.stroke();
+	bul_l.stroke();
+	bul_r.stroke();
+	strk.stroke();
 };
 function Mech(id,name){
 	this.angle = 1;
@@ -54,6 +65,7 @@ Mech.prototype.operate = function(){
 	this.torso.draw();
 	this.leg_ops();
 	this.legs.draw();
+	this.guns();
 	this.cycle_bullets();
 	// console.log(this.special_latch,input.space);
 	if(this.special_latch && !this.spec_cd){
@@ -112,8 +124,8 @@ Mech.prototype.turn_torso = function(){
 				[[16,0,1,2,3,4,5,6],[7,8,9,10,11,12,13,14]],
 				[[0,1,2,3,4,5,6,7],[8,9,10,11,12,13,14,15]]
 				];
-	c1 = set_c("canvas1");
-	c2 = set_c("canvas2");
+	c1 = set_c("torso");
+	c2 = set_c("legs");
 	var qm = 0;
 	var qo = 0;
 	for(var q=0;q<17;q++){
@@ -166,10 +178,10 @@ Mech.prototype.build = function(mech_data){
 	this.file = mech_data.file;
 	this.data_obj = mech_data.data_obj;
 	this.torso = new File_obj();
-	this.torso.load_path(mech_data.file).canv(can1).mdata(mech_data.data_obj);
+	this.torso.load_path(mech_data.file).canv(tors).mdata(mech_data.data_obj);
 	this.leg_data = mech_data.legs;
 	this.legs = new File_obj();
-	this.legs.load_path(this.leg_data.file).canv(can2).mdata(this.leg_data.data_obj);
+	this.legs.load_path(this.leg_data.file).canv(legs_c).mdata(this.leg_data.data_obj);
 	this.shooting = false;
 	this.speed = mech_data.speed;
 	this.leg_angle = 0;
@@ -178,6 +190,9 @@ Mech.prototype.build = function(mech_data){
 	this.spec_x = mech_data.spec_x;
 	this.spec_cd = mech_data.spec_cd;
 	this.bullets = [];
+	this.weapons = mech_data.weapons;
+	this.lw_counter = 0;
+	this.rw_counter = 0;
 };
 Mech.prototype.leg_ops = function(){
 	this.leg_ani();
@@ -198,18 +213,20 @@ Mech.prototype.leg_ani = function(){
 Mech.prototype.leg_dir = function(){
 	var old = this.leg_angle;
 	var nang = old + this.rot;
-	ret  = -nang;//(old-nang);
+	ret  = -nang;
 	this.leg_angle = nang;
 	return [ret, nang];
 };
 Mech.prototype.move = function(map){
 	var vel;
+	var dir = 1;
 	x_shift = 0;
 	y_shift = 0;
 	if(input.u){
 		vel = this.speed;
 	}else if(input.d){
 		vel = this.speed*-0.75;
+		dir = -1;
 	}else{
 		vel = 0;
 	};
@@ -224,51 +241,127 @@ Mech.prototype.move = function(map){
 	x_shift -= (vel * Math.cos(this.leg_angle));
 	map.data_obj.sx += x_shift;
 	map.data_obj.sy += y_shift;
-	console.log(x_shift,y_shift);
+	// console.log(x_shift,y_shift);
 	for(b in this.bullets){
 		var bb = this.bullets[b];
-		bb[2] += x_shift;
-		bb[5] += y_shift;
+		bb[2] -= Math.abs(x_shift*3)*dir;
+		bb[5] -= Math.abs(y_shift*3)*dir;
+	};
+	// target_t.shape.morph2([1,1,1,1,x_shift,y_shift]);
+	// target_t.y += y_shift;
+};
+Mech.prototype.guns = function(){
+	if(this.lw_counter == 0 && input.left_click){
+		this.new_bullet('l');
+	};
+	if(this.rw_counter == 0 && input.right_click){
+		this.new_bullet('r');
 	};
 };
 Mech.prototype.new_bullet = function(arm){
+	var wep = this.weapons[arm];
 	var pi = Math.PI;
-	var x1 = Math.cos(this.angle+pi*.5);
-	var y1 = Math.sin(this.angle+pi*.5);
-	var x2 = Math.cos(-this.cotangent);
-	var y2 = Math.sin(-this.cotangent);
-	// console.log(x,y,dx,dy);
-	// this.bullets.push([x1,y1,x2,y2,0,40]);
-	this.bullets.push( [ Math.cos(this.angle-pi*(Math.random()/15)), Math.sin(this.angle+pi*(Math.random()/15)), // index 0,1
-						 0 , 33, 90 , 0, 40,									 // index 2,3,4,5,6 
-						 arm ]);												 // index 7
+	if(arm === 'l'){
+		this.lw_counter = wep.cooldown;
+	}else{
+		this.rw_counter = wep.cooldown;
+	};
+	this.bullets.push( [ Math.cos(this.angle+pi*((Math.random()/wep.spread)-(Math.random()/(wep.spread*2)))), Math.sin(this.angle+pi*((Math.random()/wep.spread)-(Math.random()/(wep.spread*2)))), // index 0,1
+						 0 , wep.offset, wep.vel , 0, wep.l,									 // index 2,3,4,5,6 
+						 arm, 0 ]);												 // index 7,8
 };
 Mech.prototype.cycle_bullets = function(){
+	if(this.rw_counter){
+		this.rw_counter--;
+	};
+	if(this.lw_counter){
+		this.lw_counter--;
+	};
 	for(b in this.bullets){
 		var bb = this.bullets[b];
-		bul_c.strokeStyle = "#FF8000"; 
-		bul_c.lineWidth = 3;
-
-		if(bb[7] === 'l'){
-			bul_c.strokeStyle = "#FF8000"; 
-			bul_c.lineWidth = 1;
-			bul_c.moveTo( bb[2]       *bb[0] +bb[3] *bb[1],  bb[5]       *bb[1] +bb[3] * -bb[0]);
-			bul_c.lineTo((bb[2]+bb[6])*bb[0] +bb[3] *bb[1], (bb[5]+bb[6])*bb[1] +bb[3] * -bb[0]);
-		}else if( bb[7] === 'r'){
-			bul_c.strokeStyle = "#0080FF"; 
-			bul_c.lineWidth = 5;
-			var xx1 = bb[2]*bb[0]-bb[3]*bb[1];
-			var yy1 = bb[5]*bb[1]-bb[3]* -bb[0];
-			bul_c.moveTo( xx1,yy1);
-			bul_c.arc(xx1,yy1,3,0,Math.PI*2)
-			// bul_c.lineTo((bb[2]+bb[6])*bb[0] -bb[3] *bb[1], (bb[5]+bb[6])*bb[1] -bb[3] * -bb[0]);
+		if(bb[7] === 'r'){
+			this.weapons.r.render(bul_r,bb,-1);
+		}else if( bb[7] === 'l'){
+			this.weapons.l.render(bul_l,bb,1);
 		};
-		// console.log(bb[2],bb[5]);
 
 		bb[2]+=bb[4];
 		bb[5]+=bb[4];
-		// bb[4]-=bb[3];
+
+		bb[8]++;
+		if(bb[8]>=30){
+			this.bullets.splice(this.bullets.indexOf(bb),1);
+		};
 	};
+};
+var weapons = {
+	mg: {
+		offset:   34,
+		vel:      90,
+		l:        40,
+		damage:   2,
+		spread:   35,
+		cooldown: 2,
+		render: function(can,bb,arm){
+			can.strokeStyle = "#FF8000"; 
+			can.lineWidth = 1;
+			can.moveTo( bb[2]       *bb[0] -bb[3] *bb[1],  bb[5]       *bb[1] +(arm*bb[3]) * -bb[0]);
+			can.lineTo((bb[2]+bb[6])*bb[0] -bb[3] *bb[1], (bb[5]+bb[6])*bb[1] +(arm*bb[3]) * -bb[0]);
+		}
+	},
+	plasma_canon: {
+		offset:   33,
+		vel:      80,
+		l:        40,
+		damage:   20,
+		spread:   15,
+		cooldown: 15,
+		render: function(can,bb,arm){
+			can.strokeStyle = "#0080FF"; 
+			can.lineWidth = 5;
+			var xx1 = bb[2]*bb[0]+(arm*bb[3])*bb[1];
+			var yy1 = bb[5]*bb[1]+(arm*bb[3])*-bb[0];
+			can.moveTo( xx1,yy1);
+			can.arc(xx1,yy1,3,0,Math.PI*2);
+			for(var i=0;i<(bb[8]-1);i+=.5){
+				if(i<6){
+					var xx1 = (bb[2]-bb[6]*i)*bb[0]+(arm*bb[3]) * bb[1];
+					var yy1 = (bb[5]-bb[6]*i)*bb[1]+(arm*bb[3]) *-bb[0];
+					can.moveTo(xx1,yy1);
+					can.arc(xx1,yy1,3/(i*6),0,Math.PI*2);
+				};
+			};
+		}
+	},
+	rocket: {
+		offset:   33,
+		vel:      70,
+		l:        10,
+		damage:   70,
+		spread:   200,
+		cooldown: 50,
+		render: function(can,bb,arm){
+			var s_dat = {  // sx/sy = clipping coordinates, sw/sh = clipping size, x/y = position on canvas, w/h = image dimentions
+							sx: 0,             
+							sy: 0,
+							sw: 50,
+							sh: 50,
+							x:  -25,
+							y:  -25,
+							w:  50,
+							h:  50 };
+			smoke.canv(can).mdata(s_dat);
+			can.strokeStyle = "#777777";
+			can.lineWidth = 2;
+			can.moveTo( bb[2]       *bb[0] -bb[3] *bb[1],  bb[5]       *bb[1] +(arm*bb[3]) * -bb[0]);
+			can.lineTo((bb[2]+bb[6])*bb[0] -bb[3] *bb[1], (bb[5]+bb[6])*bb[1] +(arm*bb[3]) * -bb[0]);
+			for(var i=0;i<(bb[8]-1);i+=.5){
+				var xx1 = (bb[2]-bb[6]*i*2)*bb[0]+(arm*bb[3]) * bb[1];
+				var yy1 = (bb[5]-bb[6]*i*2)*bb[1]+(arm*bb[3]) *-bb[0];
+				smoke.move(xx1,yy1).scale(50*(i/8),50*(i/8)).draw();
+			};
+		}
+	}
 };
 var test_mech1 = {
 	file: "images/test_mech1.png",
@@ -306,9 +399,8 @@ var test_mech1 = {
 	// shooting: false
 	speed: 4,
 	weapons:{
-		lazer: function(){
-			
-		}
+		r: weapons.mg,
+		l: weapons.plasma_canon
 	},
 	special: function(x){
 		if(x!=0){
@@ -337,6 +429,27 @@ var map1 = {
 		w:  3200,
 		h:  3200
 	}
+};
+function Target(){
+	this.x = 50;
+	this.y = 50;
+	this.shape = new Render_obj();
+	this.data = [
+		{'op':'s','x':100+this.x,'y':100+this.y},
+		{'op':'d','x':150+this.x,'y':100+this.y},
+		{'op':'d','x':150+this.x,'y':150+this.y},
+		{'op':'d','x':100+this.x,'y':150+this.y},
+		{'op':'end'}
+	];
+	this.shape.load(strk,this.data);
+	this.draw = function(){
+
+		// strk.rect(400,400,this.x,this.y);
+		
+		this.shape.draw_shape();
+		// strk.fillStyle("#ffffff");
+		// strk.fillRect(100,100,this.x,this.y);
+	};
 };
 document.onmousemove = function(){
 	// mech1.torso.rotate(mech1.mech_angle());

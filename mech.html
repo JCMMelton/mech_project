@@ -17,33 +17,38 @@
 		body{
 
 		}
-		#canvas1{
+		canvas{
+			display: inline;
+			position: absolute;
+		}
+		#torso{
 			/*cursor: none;*/
 			z-index:3;
-			display: inline;
-			position: absolute;
 		}
-		#canvas2{
+		#legs{
 			z-index:2;
-			display: inline;
-			position: absolute;
 		}
-		#bullets{
+		#left_bullets{
 			z-index:2;
-			display: inline;
-			position: absolute;
+		}
+		#right_bullets{
+			z-index:2;
+		}
+		#structures{
+			z-index:12;
 		}
 		#map{
 			z-index:1;
-			display: inline;
-			position: absolute;
 		}
 	</style>
 </head>
 <body oncontextmenu="return false;">
-	<canvas id="canvas1"></canvas>
-	<canvas id="canvas2"></canvas>
-	<canvas id="bullets"></canvas>
+<!-- <body> -->
+	<canvas id="torso"></canvas>
+	<canvas id="legs"></canvas>
+	<canvas id="left_bullets"></canvas>
+	<canvas id="right_bullets"></canvas>
+	<canvas id="structures"></canvas>
 	<canvas id="map"></canvas>
 </body>
 </html>
